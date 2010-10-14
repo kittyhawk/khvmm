@@ -189,9 +189,11 @@ public:
     void dump_inj_channel(word_t ch=nr_inj_fifos, word_t ctr=nr_counters);
 #endif
     
-    ptorus_dma_t (ptorus_t *t, unsigned g, word_t phys, word_t virt) : torus_dma_t (g), torus (t), base (virt)
+    ptorus_dma_t (ptorus_t *t, unsigned g, u64_t phys, word_t virt) : torus_dma_t (g), torus (t), base (virt)
         {
-            L4_Sigma0_GetPage (L4_nilthread, L4_Fpage (phys, BGP_SIZE_TORUS_DMA_GRP), L4_Fpage (virt, BGP_SIZE_TORUS_DMA_GRP));
+			word_t phys_low = (word_t)phys;
+			word_t phys_high = (word_t)(phys >> 32);
+            L4_Sigma0_GetPage (L4_nilthread, L4_Fpage (phys_low, BGP_SIZE_TORUS_DMA_GRP), phys_high, L4_Fpage (virt, BGP_SIZE_TORUS_DMA_GRP));
         }
 
 };
@@ -411,10 +413,10 @@ public:
     bool handle_hwirq(const word_t, word_t &);
     void ack_hwirq(word_t);
     
-    ptorus_t (word_t addr) : dma0 (this, 0, BGP_SIGMA0_TORUS_DMA + 0 * BGP_SIZE_TORUS_DMA_GRP, addr + 0 * BGP_SIZE_TORUS_DMA_GRP),
-                             dma1 (this, 1, BGP_SIGMA0_TORUS_DMA + 1 * BGP_SIZE_TORUS_DMA_GRP, addr + 1 * BGP_SIZE_TORUS_DMA_GRP),
-                             dma2 (this, 2, BGP_SIGMA0_TORUS_DMA + 2 * BGP_SIZE_TORUS_DMA_GRP, addr + 2 * BGP_SIZE_TORUS_DMA_GRP),
-                             dma3 (this, 3, BGP_SIGMA0_TORUS_DMA + 3 * BGP_SIZE_TORUS_DMA_GRP, addr + 3 * BGP_SIZE_TORUS_DMA_GRP),
+    ptorus_t (word_t addr) : dma0 (this, 0, BGP_PHYS_TORUS_DMA + 0 * BGP_SIZE_TORUS_DMA_GRP, addr + 0 * BGP_SIZE_TORUS_DMA_GRP),
+                             dma1 (this, 1, BGP_PHYS_TORUS_DMA + 1 * BGP_SIZE_TORUS_DMA_GRP, addr + 1 * BGP_SIZE_TORUS_DMA_GRP),
+                             dma2 (this, 2, BGP_PHYS_TORUS_DMA + 2 * BGP_SIZE_TORUS_DMA_GRP, addr + 2 * BGP_SIZE_TORUS_DMA_GRP),
+                             dma3 (this, 3, BGP_PHYS_TORUS_DMA + 3 * BGP_SIZE_TORUS_DMA_GRP, addr + 3 * BGP_SIZE_TORUS_DMA_GRP),
                              dma(&dma0), 
                              vmchan(this, &dma[vmchan.group]) {} 
 #ifndef NODEBUG

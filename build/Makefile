@@ -11,19 +11,19 @@
 
 -include Makeconf
 
-CROSS		?=
+CROSS		?= powerpc-unknown-elf-
 CC		:= $(CROSS)gcc
 LD		:= $(CROSS)ld
 RM		:= rm -f
 
 TARGET		:= khvmm
-USR_DIR		?= ../../l4ka-pistachio/build/user
+USR_DIR		?= ../../l4ka-pistachio/bluegene-build/userland/build
 SRC_DIR		:= ../src
 INC_DIR		:= ../include $(USR_DIR)/include
-LIB_DIR		:= $(USR_DIR)/lib
+LIB_DIR		:= $(USR_DIR)/lib /home/jens/x-tools/powerpc-unknown-elf/lib/gcc/powerpc-unknown-elf/4.3.4
 
 # Sources
-LIB		:= l4 io
+LIB		:= l4 io gcc
 SRC		:= khvmm.ld $(wildcard $(SRC_DIR)/*.S) $(wildcard $(SRC_DIR)/*.cc)
 OBJ		:= $(notdir		\
 		   $(patsubst %.ld,%.o,	\

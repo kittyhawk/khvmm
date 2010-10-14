@@ -57,9 +57,11 @@ private:
         }
 
 public:
-    ptree_chan_t (ptree_t *t, unsigned c, word_t phys, word_t virt) : tree_chan_t (c), tree (t), base (virt)
+    ptree_chan_t (ptree_t *t, unsigned c, u64_t phys, word_t virt) : tree_chan_t (c), tree (t), base (virt)
         {
-            L4_Sigma0_GetPage (L4_nilthread, L4_Fpage (phys, 0x1000), L4_Fpage (virt, 0x1000));
+            word_t phys_low = (word_t)phys;
+            word_t phys_high = (word_t)(phys >> 32);
+			L4_Sigma0_GetPage (L4_nilthread, L4_Fpage (phys_low, 0x1000), phys_high, L4_Fpage (virt, 0x1000));
         }
 
     word_t recv_packet();
@@ -160,8 +162,8 @@ public:
     word_t const get_rcv_irq() { return rcv_irq; }
     word_t const get_inj_irq() { return inj_irq; }
     
-    ptree_t (word_t addr) : chan0 (this, 0, BGP_SIGMA0_TREE0, addr),
-                            chan1 (this, 1, BGP_SIGMA0_TREE1, addr + 0x1000),
+    ptree_t (word_t addr) : chan0 (this, 0, BGP_PHYS_TREE0, addr),
+                            chan1 (this, 1, BGP_PHYS_TREE1, addr + 0x1000),
                             chan (&chan0),
                             vmchan (chan[vmchan.ch]) {}
         

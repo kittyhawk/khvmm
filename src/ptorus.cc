@@ -383,6 +383,7 @@ bool ptorus_t::vmchan_t::handle_rcv_thr_zero(word_t &core_mask)
 void ptorus_t::init(L4_ThreadId_t irq_handler)
 {
     fdt_prop_t *prop;
+    word_t interrupt_count;
     
     if (!fdt_t::fdt->find_head_node("/plb/torus"))
 	goto error;
@@ -407,11 +408,9 @@ void ptorus_t::init(L4_ThreadId_t irq_handler)
     if (! (prop = fdt_t::fdt->find_prop_node("/plb/torus/interrupts")) )
 	goto error;
 
-    if (prop->length() != 88 * sizeof(word_t))
-        goto error;
-
     // For now, we rely on U-Boot's hardcccoded interrupt map
-    for (word_t i = 0; i < 88; i++)
+    interrupt_count = prop->length() / sizeof(word_t);
+    for (word_t i = 0; i < interrupt_count; i++)
     {
         word_t irq = prop->u32(i);
         assert(irq >= irq_min && irq <= irq_max);

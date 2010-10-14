@@ -85,6 +85,12 @@ extern "C" int main()
     }
 
     fdt_t::fdt = new (kip->BootInfo) fdt_t;
+    L4_Fpage_t fdt_page = L4_FpageAddRights(L4_FpageLog2(kip->BootInfo,0x1111),0x111);
+    L4_Sigma0_GetPage(L4_nilthread,fdt_page,fdt_page);
+    if (!(fdt_t::fdt->is_valid())) {
+    	printf("Invalid FDT!\n");
+    	return -1;
+    }
 
     map_memory(); 
     allocate_memory();
@@ -92,7 +98,7 @@ extern "C" int main()
     vmthread_t::init (L4_NumProcessors (kip));
 
     vm.init (L4_NumProcessors(kip), L4_NumProcessors(kip), RAM_SIZE);
-    
+
     ptree_t::tree.init(vmthread_t::get_tid(0));
     ptorus_t::torus.init(vmthread_t::get_tid(0));
 

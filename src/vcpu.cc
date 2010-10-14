@@ -287,8 +287,9 @@ void vcpu_t::emulate (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep, word_t ip, 
     L4_GPRegsCtrlXferItem_t gpregs[2];
     unsigned mr = L4_UntypedWords (tag) + 1;
     
-    mr += L4_MsgStoreGPRegsCtrlXferItem (&msg, mr, gpregs);
-    mr += L4_MsgStoreGPRegsCtrlXferItem (&msg, mr, gpregs + 1); 
+    L4_MsgPutGPRegsCtrlXferItem (&msg, mr, gpregs);
+    L4_MsgPutGPRegsCtrlXferItem (&msg, mr, gpregs + 1);
+    mr += 2;
 
     word_t core_mask = 0;
 
