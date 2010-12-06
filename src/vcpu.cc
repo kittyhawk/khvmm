@@ -18,6 +18,8 @@
 #include "vm.h"
 #include "vmthread.h"
 
+//#define DEBUG //uncomment this to show debug output
+
 bool vcpu_t::init (unsigned c, unsigned p, vm_t *v, L4_ThreadId_t space)
 {
     int res;
@@ -61,6 +63,8 @@ bool vcpu_t::init (unsigned c, unsigned p, vm_t *v, L4_ThreadId_t space)
 
     // Place thread on initial CPU
     L4_Set_ProcessorNo_Prio(tid, pcpu, PRIO_VCPU);
+
+    printf("VM Thread activated! tid=%#lx, pager=%#lx\n",tid.raw,disp.raw);
 
     // Configure exception messages
     L4_Msg_t ctrlxfer_msg;
@@ -132,6 +136,7 @@ bool vcpu_t::launch_vcpu(word_t ip)
 {
     L4_Msg_t msg;
 
+    printf("Starting VCPU at entry point %#lx\n",ip);
     L4_Clear(&msg);
     L4_Append (&msg, ip);
     L4_Append (&msg, 0);
@@ -142,6 +147,9 @@ bool vcpu_t::launch_vcpu(word_t ip)
 
 word_t vcpu_t::emulate_mfdcr (Dcr dcr, word_t *val)
 {
+#ifdef DEBUG
+	printf ("%s: DCR:%#lx -> V:%#lx\n", __func__, static_cast<word_t>(dcr), *val);
+#endif
     switch (dcr) {
 
     case DCR_SERDES_MIN ... DCR_SERDES_MAX:     // ignore for now
@@ -154,7 +162,7 @@ word_t vcpu_t::emulate_mfdcr (Dcr dcr, word_t *val)
         vm->test.dcr_read (vtest_t::Dcr (dcr - DCR_TEST_MIN), val);
         return 0;
             
-    case tree_t::DCRBASE_MIN ... tree_t::DCRBASE_MAX:
+    case DCR_TREE_MIN ... DCR_TREE_MAX:
         return vm->tree.dcr_read (vtree_t::Dcr (dcr - tree_t::DCRBASE_MIN), val);
 
     case torus_t::DCRBASE_MIN ... torus_t::DCRBASE_MAX:
@@ -174,6 +182,9 @@ word_t vcpu_t::emulate_mfdcr (Dcr dcr, word_t *val)
 
 void vcpu_t::emulate_mtdcr (Dcr dcr, word_t val)
 {
+#ifdef DEBUG
+	printf ("%s: DCR:%#lx <- V:%#lx\n", __func__, static_cast<word_t>(dcr), val);
+#endif
     switch (dcr) {
 
     case DCR_SERDES_MIN ... DCR_SERDES_MAX:     // ignore for now
@@ -185,7 +196,8 @@ void vcpu_t::emulate_mtdcr (Dcr dcr, word_t val)
         vm->test.dcr_write (vtest_t::Dcr (dcr - DCR_TEST_MIN), val);
         return;
 
-    case tree_t::DCRBASE_MIN ... tree_t::DCRBASE_MAX:
+    //case tree_t::DCRBASE_MIN ... tree_t::DCRBASE_MAX:
+    case DCR_TREE_MIN ... DCR_TREE_MAX:
         vm->tree.dcr_write (vtree_t::Dcr (dcr - tree_t::DCRBASE_MIN), val);
         return;
 
@@ -286,12 +298,15 @@ void vcpu_t::emulate (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep, word_t ip, 
 {
     L4_GPRegsCtrlXferItem_t gpregs[2];
     unsigned mr = L4_UntypedWords (tag) + 1;
-    
-    L4_MsgPutGPRegsCtrlXferItem (&msg, mr, gpregs);
-    L4_MsgPutGPRegsCtrlXferItem (&msg, mr, gpregs + 1);
-    mr += 2;
 
+    mr += L4_MsgGetGPRegsCtrlXferItem (&msg, mr, gpregs);
+    mr += L4_MsgGetGPRegsCtrlXferItem (&msg, mr, gpregs + 1);
+    
     word_t core_mask = 0;
+
+#ifdef DEBUG
+    printf("Emulating... (IP: %#lx, pri: %d, sec: %d\n",ip,opcode.primary(),opcode.secondary());
+#endif
 
     switch (opcode.primary()) {
 
@@ -377,7 +392,7 @@ void vcpu_t::emulate (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep, word_t ip, 
             break;
 
         case 32:            // lwz
-            assert (gva == (opcode.ra() ? *gpr (gpregs, opcode.ra()) + opcode.d() : 0));
+        	assert (gva == (opcode.ra() ? *gpr (gpregs, opcode.ra()) + opcode.d() : 0));
             core_mask = emulate_device_gpr (gpa, gpr (gpregs, opcode.rt()), true);
             break;
 
@@ -422,7 +437,7 @@ void vcpu_t::handle_hvm_tlb (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep)
     word_t  l2s = ((tlb0 >> 4 & 0xf) << 1) + 10;
     paddr_t gpa = static_cast<paddr_t>(tlb1 & 0xf) << 32 | (tlb1 & ~0x3ff) | (gva & (1ul << l2s) - 1);
 
-#if 0
+#ifdef DEBUG
     printf ("%s: TLB[%d]: GVA:%08lx GPA:%01lx%08lx S:%lx\n",
             __func__,
             idx,
@@ -437,7 +452,7 @@ void vcpu_t::handle_hvm_tlb (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep)
     if (vm->sram.relocatable (gpa, rel)) {
         gva &= ~((1ul << l2s) - 1);
         rel &= ~((1ul << l2s) - 1);
-#if 0
+#ifdef DEBUG
         printf ("Relocate for GVA:%08lx GPA:%01lx%08lx->%08lx L2S:%lu\n",
                 gva,
                 static_cast<word_t>(gpa >> 32),
@@ -457,7 +472,7 @@ void vcpu_t::handle_hvm_tlb (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep)
 
         gpa &= ~((1ul << l2s) - 1);
         map &= ~((1ul << l2s) - 1);
-#if 0
+#ifdef DEBUG
         printf ("Map FP:%08lx -> %08lx\n", map, static_cast<word_t>(gpa));
 #endif
         L4_Fpage_t fp = L4_FpageLog2 (map, l2s) + L4_FullyAccessible;
@@ -559,7 +574,7 @@ bool vcpu_t::dispatch_message (L4_MsgTag_t tag)
 void vcpu_t::set_tlb_entry (int idx, word_t vaddr, paddr_t paddr,
 			                int log2size, word_t attribs, int pid, bool valid)
 {
-#if 0
+#ifdef DEBUG
     printf ("Set TLBE[%d]: V:%lx P:%lx S:%u A:%lx PID:%x V:%u\n",
             idx, vaddr, static_cast<word_t>(paddr), log2size, attribs, pid, valid);
 #endif

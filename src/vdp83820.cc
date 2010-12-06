@@ -20,11 +20,11 @@ static const bool debug_regio=0;
 #include "ptree.h"
 #include "ptorus.h"
 
-//#define Nregdprintf(x...)  printf(x)
-//#define Ndprintf(x...)     printf(x)
+#define Nregdprintf(x...)  printf(x)
+#define Ndprintf(x...)     printf(x)
 
-#define Nregdprintf(x...)  
-#define Ndprintf(x...) 
+//#define Nregdprintf(x...)
+//#define Ndprintf(x...)
 
 #undef DEBUG_PACKETS
 

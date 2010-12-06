@@ -17,6 +17,7 @@
 #include <l4/sigma0.h>
 #include <l4/thread.h>
 #include <l4/schedule.h>
+//#include <l4/misc.h>
 
 L4_INLINE L4_Word_t L4_Set_ProcessorNo_Prio(L4_ThreadId_t tid, L4_Word_t cpu_no, L4_Word_t prio)
 {

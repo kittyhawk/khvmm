@@ -42,7 +42,7 @@ PFLAGS		:= $(addprefix -D,$(DEFINES)) $(addprefix -I,$(INC_DIR))
 # Optimization options
 AFLAGS		:= -mno-toc
 DFLAGS		:= -MP -MMD -pipe
-OFLAGS		:= -Os
+OFLAGS		:= -Os -g
 
 # Language options
 FFLAGS		:= -fdata-sections -ffunction-sections -fomit-frame-pointer -freg-struct-return -freorder-blocks -funit-at-a-time

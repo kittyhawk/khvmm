@@ -117,7 +117,7 @@ __attribute__((noreturn))
     	tag = L4_ReplyWait (dst, &src);
 	
     	if (L4_IpcFailed (tag)) {
-            printf ("Error: %#lx\n", L4_ErrorCode());
+            printf ("Error: %#lx, from TID %#lx, tag: %#lx\n", L4_ErrorCode(),src.raw,tag.raw);
             L4_KDB_Enter ("IPC error");
     	    continue;
     	}

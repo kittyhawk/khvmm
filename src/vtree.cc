@@ -44,7 +44,8 @@ word_t vtree_chan_t::recv_packet (word_t head)
         return tree->raise_irqs();
     }
 
-    //printf ("virtual RX FIFO full, packet dropped\n");
+    printf ("virtual RX FIFO full, packet dropped\n");
+    L4_KDB_Enter();
 
     return 0;
 }

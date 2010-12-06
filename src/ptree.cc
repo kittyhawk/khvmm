@@ -17,7 +17,8 @@
 
 extern vm_t vm;
 
-#undef DEBUG_PACKETS 
+#undef DEBUG_PACKETS
+//#define DEBUG_PACKETS
 
 #define TREE_IRQMASK_INJ	(PIX_APAR0  | PIX_APAR1  | \
                                  PIX_ALIGN0 | PIX_ALIGN1 |\
@@ -98,9 +99,8 @@ word_t ptree_chan_t::recv_packet()
 
 #ifdef DEBUG_PACKETS
         printf ("tree channel %d receive head: %#010lx\n",  channel, hdr.raw);
-        printf ("tree channel %d receive head: %#010lx\n",  channel, hdr.raw);
         printf("\tstatus %lx <hdr %ld pkt %ld>\n",
-               status.raw,  status.rcv_pkt,  status.rcv_hdr);
+               status.raw,  status.rcv_hdr,  status.rcv_pkt);
         printf("\tlink <proto %d dst %ld src %ld>\n",
                lhdr.lnk_proto,  lhdr.dst_key,  lhdr.src_key);
         for (unsigned i = 0; i < 3; i++)
@@ -237,6 +237,8 @@ void ptree_t::init(L4_ThreadId_t irq_handler)
     }
     
     nodeaddr = dcr_read(NADDR);
+
+    vm.tree.set_nodeaddr(nodeaddr);
 
     printf("TREE: node id %06lx addr %lx irq <%d,%d,%d,%d>\n", 
            nodeid, nodeaddr,  inj_irq, rcv_irq, rcv_irq_vc0, rcv_irq_vc1);

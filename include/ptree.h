@@ -32,6 +32,8 @@ private:
 
     word_t gpr_read (Register reg)
         {
+    		//printf("Reading from gpr addr %#lx\n",base + reg);
+    		//sync();
             return *reinterpret_cast<word_t volatile *>(base + reg);
         }
 
@@ -61,7 +63,7 @@ public:
         {
             word_t phys_low = (word_t)phys;
             word_t phys_high = (word_t)(phys >> 32);
-			L4_Sigma0_GetPage (L4_nilthread, L4_Fpage (phys_low, 0x1000), phys_high, L4_Fpage (virt, 0x1000));
+			L4_Sigma0_GetPage (L4_nilthread, L4_Fpage(phys_low, 0x1000), phys_high, L4_Fpage(virt, 0x1000));
         }
 
     word_t recv_packet();
@@ -156,6 +158,7 @@ public:
     static ptree_t tree;
     
     word_t get_nodeid() const { return nodeid; }
+    word_t get_nodeaddr() const { return nodeaddr; }
     
     bool handle_hwirq(word_t irq, word_t &core_mask);
  

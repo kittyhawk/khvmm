@@ -148,6 +148,7 @@ class ppc_instr_t
         unsigned rt() const         { return xform.rt; }
         s16_t d() const             { return dform.d;  }
         unsigned rf() const         { return xform.rb << 5 | xform.ra; }
+        word_t getRaw()				{ return raw; }
 };
 
 

@@ -36,7 +36,11 @@ class vcpu_t
         
         /* Global interrupt (0x660-0x66f)  */
         DCR_GLOBAL_INT_MIN          = 0x660,
-        DCR_GLOBAL_INT_MAX          = 0x660 + 0xf
+        DCR_GLOBAL_INT_MAX          = 0x660 + 0xf,
+
+        /* BGP Tree */
+        DCR_TREE_MIN				= 0xc00,
+        DCR_TREE_MAX				= 0xc7f
         
     };
 

@@ -143,5 +143,6 @@ public:
             lock_guard_t<spinlock_t> guard (lock);
             return raise_irqs();
         }
+    void set_nodeaddr(word_t val) { naddr = val; }
 
 };

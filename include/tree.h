@@ -162,7 +162,7 @@ public:
     
     enum Dcr
     {
-        // Class Definition Registers
+    	// Class Definition Registers
         RDR_MIN     = 0x0,
         RDR_MAX     = 0x7,
         ISR_MIN     = 0x8,
