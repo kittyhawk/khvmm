@@ -103,7 +103,7 @@ word_t ptree_chan_t::recv_packet()
                status.raw,  status.rcv_hdr,  status.rcv_pkt);
         printf("\tlink <proto %d dst %ld src %ld>\n",
                lhdr.lnk_proto,  lhdr.dst_key,  lhdr.src_key);
-        for (unsigned i = 0; i < 3; i++)
+        for (unsigned i = 0; i < 16; i++)
         {
             fpu_word_t data;
             fpu_t::read(i, &data);
