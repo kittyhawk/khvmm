@@ -12,7 +12,25 @@
 
 #define MAX_VCPU        4
 #define MAX_PCPU        4
+#define NUM_VMS			2
 #define STACK_SIZE      (16 * 1024)
+
+/*
+ * These need to equal the offsets used by u-boot!
+ * TODO: Pass these in the fdt.
+ */
+#define KERNEL_OFFSET	0x11000000ul
+#define RAMDISK_OFFSET	0x12000000ul
+#define SCRIPT_OFFSET	0x100000ul
+
+/*
+ * These don't have to be completely accurate. They just need
+ * to be bigger than the actual image sizes.
+ * TODO: Pass these in the fdt.
+ */
+#define KERNEL_SIZE		(2 * 1024 * 1024)
+#define RAMDISK_SIZE	(8 * 1024 * 1024)
+#define SCRIPT_SIZE		1024
 
 #define CPU_FREQ        850000000ul
 

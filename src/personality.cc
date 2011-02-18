@@ -27,7 +27,7 @@ bgp_personality_ddr_t::bgp_personality_ddr_t (size_t ram)
 
 bgp_personality_network_t::bgp_personality_network_t()
                          : psetsize (32),
-                           ionoderank (32)
+                           ionoderank (64)
 {
     fdt_prop_t *prop;
     

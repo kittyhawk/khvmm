@@ -26,7 +26,8 @@
 ptree_t ptree_t::tree (BGP_KHVMM_TREE);
 ptorus_t ptorus_t::torus(BGP_KHVMM_TORUS_DMA);
 
-vm_t vm;
+vm_t vm[NUM_VMS];
+//vm_t vm2;
 
 void allocate_memory()
 {
@@ -71,7 +72,8 @@ void map_memory()
 
 extern "C" int main()
 {
-    // Call static constructors
+	int i;
+	// Call static constructors
     extern void (*__CTOR_LST__)(), (*__CTOR_END__)();
     for (void (**func)() = &__CTOR_END__; func != &__CTOR_LST__; (*--func)()) ;
 
@@ -95,9 +97,17 @@ extern "C" int main()
     map_memory(); 
     allocate_memory();
 
+    //copy the kernel and ramdisk images from the first VM to all the others.
+    for (i = 1; i < NUM_VMS; ++i) {
+    	memcpy(reinterpret_cast<void *>(RAM_SIZE / NUM_VMS * i + RAM_MAP + KERNEL_OFFSET), reinterpret_cast<void *>(RAM_MAP + KERNEL_OFFSET), KERNEL_SIZE);
+    	memcpy(reinterpret_cast<void *>(RAM_SIZE / NUM_VMS * i + RAM_MAP + RAMDISK_OFFSET), reinterpret_cast<void *>(RAM_MAP + RAMDISK_OFFSET), RAMDISK_SIZE);
+    	memcpy(reinterpret_cast<void *>(RAM_SIZE / NUM_VMS * i + RAM_MAP + SCRIPT_OFFSET), reinterpret_cast<void *>(RAM_MAP + SCRIPT_OFFSET), SCRIPT_SIZE);
+    }
+
     vmthread_t::init (L4_NumProcessors (kip));
 
-    vm.init (L4_NumProcessors(kip), L4_NumProcessors(kip), RAM_SIZE);
+    for (i = 0; i < NUM_VMS; ++i)
+    	vm[i].init (L4_NumProcessors(kip), L4_NumProcessors(kip), RAM_SIZE / NUM_VMS, RAM_SIZE / NUM_VMS * i, i);
 
     ptree_t::tree.init(vmthread_t::get_tid(0));
     ptorus_t::torus.init(vmthread_t::get_tid(0));

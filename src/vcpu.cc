@@ -148,7 +148,7 @@ bool vcpu_t::launch_vcpu(word_t ip)
 word_t vcpu_t::emulate_mfdcr (Dcr dcr, word_t *val)
 {
 #ifdef DEBUG
-	printf ("%s: DCR:%#lx -> V:%#lx\n", __func__, static_cast<word_t>(dcr), *val);
+	printf ("VCPU %d: %s: DCR:%#lx -> V:%#lx\n",vm->index, __func__, static_cast<word_t>(dcr), *val);
 #endif
     switch (dcr) {
 
@@ -183,7 +183,7 @@ word_t vcpu_t::emulate_mfdcr (Dcr dcr, word_t *val)
 void vcpu_t::emulate_mtdcr (Dcr dcr, word_t val)
 {
 #ifdef DEBUG
-	printf ("%s: DCR:%#lx <- V:%#lx\n", __func__, static_cast<word_t>(dcr), val);
+	printf ("VCPU %d: %s: DCR:%#lx <- V:%#lx\n", vm->index, __func__, static_cast<word_t>(dcr), val);
 #endif
     switch (dcr) {
 
@@ -305,7 +305,7 @@ void vcpu_t::emulate (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep, word_t ip, 
     word_t core_mask = 0;
 
 #ifdef DEBUG
-    printf("Emulating... (IP: %#lx, pri: %d, sec: %d\n",ip,opcode.primary(),opcode.secondary());
+    printf("VCPU %d: Emulating... (IP: %#lx, pri: %d, sec: %d\n",vm->index,ip,opcode.primary(),opcode.secondary());
 #endif
 
     switch (opcode.primary()) {
@@ -438,8 +438,9 @@ void vcpu_t::handle_hvm_tlb (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep)
     paddr_t gpa = static_cast<paddr_t>(tlb1 & 0xf) << 32 | (tlb1 & ~0x3ff) | (gva & (1ul << l2s) - 1);
 
 #ifdef DEBUG
-    printf ("%s: TLB[%d]: GVA:%08lx GPA:%01lx%08lx S:%lx\n",
-            __func__,
+    printf ("VCPU %d: %s: TLB[%d]: GVA:%08lx GPA:%01lx%08lx S:%lx\n",
+            vm->index,
+    		__func__,
             idx,
             gva,
             static_cast<word_t>(gpa >> 32),
@@ -453,8 +454,9 @@ void vcpu_t::handle_hvm_tlb (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep)
         gva &= ~((1ul << l2s) - 1);
         rel &= ~((1ul << l2s) - 1);
 #ifdef DEBUG
-        printf ("Relocate for GVA:%08lx GPA:%01lx%08lx->%08lx L2S:%lu\n",
-                gva,
+        printf ("VCPU %d: Relocate for GVA:%08lx GPA:%01lx%08lx->%08lx L2S:%lu\n",
+                vm->index,
+        		gva,
                 static_cast<word_t>(gpa >> 32),
                 static_cast<word_t>(gpa),
                 static_cast<word_t>(rel), l2s);
@@ -473,7 +475,7 @@ void vcpu_t::handle_hvm_tlb (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep)
         gpa &= ~((1ul << l2s) - 1);
         map &= ~((1ul << l2s) - 1);
 #ifdef DEBUG
-        printf ("Map FP:%08lx -> %08lx\n", map, static_cast<word_t>(gpa));
+        printf ("VCPU %d: Map FP:%08lx -> %08lx\n", vm->index, map, static_cast<word_t>(gpa));
 #endif
         L4_Fpage_t fp = L4_FpageLog2 (map, l2s) + L4_FullyAccessible;
         L4_Append (&rep, L4_MapItem (fp, gpa));
@@ -575,8 +577,8 @@ void vcpu_t::set_tlb_entry (int idx, word_t vaddr, paddr_t paddr,
 			                int log2size, word_t attribs, int pid, bool valid)
 {
 #ifdef DEBUG
-    printf ("Set TLBE[%d]: V:%lx P:%lx S:%u A:%lx PID:%x V:%u\n",
-            idx, vaddr, static_cast<word_t>(paddr), log2size, attribs, pid, valid);
+    printf ("VCPU %d: Set TLBE[%d]: V:%lx P:%lx S:%u A:%lx PID:%x V:%u\n",
+            vm->index, idx, vaddr, static_cast<word_t>(paddr), log2size, attribs, pid, valid);
 #endif
     
     L4_Msg_t ctrlxfer_msg;

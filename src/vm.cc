@@ -36,7 +36,7 @@ word_t vm_t::ack_irq(word_t irq)
     return 0;
 }
 
-void vm_t::init (unsigned v, unsigned p, size_t memsize)
+void vm_t::init (unsigned v, unsigned p, size_t memsize, unsigned memoffset, unsigned vm_number)
 {
     if (v > MAX_VCPU)
         v = MAX_VCPU;
@@ -47,6 +47,7 @@ void vm_t::init (unsigned v, unsigned p, size_t memsize)
     printf ("Initializing VM (%u vCPUs, %u pCPUs, %uMB RAM)\n", v, p, memsize / (1024*1024));
 
     num_vcpu = v;
+    index = vm_number;
 
     void *kip = L4_KernelInterface();
     kip_area = L4_FpageLog2 ((L4_Word_t) kip, L4_KipAreaSizeLog2 (kip));
@@ -61,9 +62,9 @@ void vm_t::init (unsigned v, unsigned p, size_t memsize)
 
     utcb_area = L4_Fpage (utcb_base, size);
 
-    ram = resource_t (RAM_REAL, RAM_GPA, RAM_SIZE, RAM_MAP);
+    ram = resource_t (RAM_REAL + memoffset, RAM_GPA, memsize, RAM_MAP + memoffset);
     printf ("Resource RAM:  GPA:%08lx MAP:%08lx S:%lx\n",
-            RAM_GPA, RAM_MAP, RAM_SIZE);
+            RAM_GPA, RAM_MAP + memoffset, memsize);
 
     sram = resource_t (SRAM_REAL, SRAM_GPA, SRAM_SIZE, SRAM_MAP);
     printf ("Resource SRAM: GPA:%08lx MAP:%08lx S:%lx\n",
@@ -73,7 +74,7 @@ void vm_t::init (unsigned v, unsigned p, size_t memsize)
     elf_hdr_t::load_file (0x1700000, ram.map_base, sram.map_base + sram.size);
 
     // set up personality page
-    bgp = new (SRAM_MAP + SRAM_PERS_TABLE_OFFS) bgp_personality_t (CPU_FREQ, RAM_SIZE);
+    bgp = new (SRAM_MAP + SRAM_PERS_TABLE_OFFS) bgp_personality_t (CPU_FREQ, memsize);
 
     // bring up virtual CPUs
     for (unsigned i = 0; i < num_vcpu; i++)

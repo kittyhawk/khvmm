@@ -30,6 +30,7 @@ class vm_t
 {
 public:
     unsigned            num_vcpu;
+    unsigned			index;
     L4_Fpage_t          kip_area;
     L4_Fpage_t          utcb_area;
     resource_t          ram;
@@ -49,7 +50,7 @@ public:
 
     bgp_personality_t *bgp;
     
-    void init (unsigned, unsigned, size_t);
+    void init (unsigned, unsigned, size_t, unsigned, unsigned);
 
     vm_t() : bic     (this),
              torus   (this),

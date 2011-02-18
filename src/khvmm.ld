@@ -13,7 +13,7 @@ OUTPUT_FORMAT("elf32-powerpc", "elf32-powerpc", "elf32-powerpc")
 OUTPUT_ARCH(powerpc:common)
 ENTRY(_start)
 
-LINKADDR = 0x600000;
+LINKADDR = 0x6000000;
 
 SECTIONS
 {
