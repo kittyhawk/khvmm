@@ -99,15 +99,25 @@ extern "C" int main()
 
     //copy the kernel and ramdisk images from the first VM to all the others.
     for (i = 1; i < NUM_VMS; ++i) {
-    	memcpy(reinterpret_cast<void *>(RAM_SIZE / NUM_VMS * i + RAM_MAP + KERNEL_OFFSET), reinterpret_cast<void *>(RAM_MAP + KERNEL_OFFSET), KERNEL_SIZE);
-    	memcpy(reinterpret_cast<void *>(RAM_SIZE / NUM_VMS * i + RAM_MAP + RAMDISK_OFFSET), reinterpret_cast<void *>(RAM_MAP + RAMDISK_OFFSET), RAMDISK_SIZE);
-    	memcpy(reinterpret_cast<void *>(RAM_SIZE / NUM_VMS * i + RAM_MAP + SCRIPT_OFFSET), reinterpret_cast<void *>(RAM_MAP + SCRIPT_OFFSET), SCRIPT_SIZE);
+    	memcpy(reinterpret_cast<void *>(((RAM_SIZE / NUM_VMS * i) & ~0x3FFFFF) + RAM_MAP + KERNEL_OFFSET),
+    			reinterpret_cast<void *>(RAM_MAP + KERNEL_OFFSET),
+    			KERNEL_SIZE);
+    	memcpy(reinterpret_cast<void *>(((RAM_SIZE / NUM_VMS * i) & ~0x3FFFFF) + RAM_MAP + RAMDISK_OFFSET),
+    			reinterpret_cast<void *>(RAM_MAP + RAMDISK_OFFSET),
+    			RAMDISK_SIZE);
+    	memcpy(reinterpret_cast<void *>(((RAM_SIZE / NUM_VMS * i) & ~0x3FFFFF) + RAM_MAP + SCRIPT_OFFSET),
+    			reinterpret_cast<void *>(RAM_MAP + SCRIPT_OFFSET),
+    			SCRIPT_SIZE);
     }
 
     vmthread_t::init (L4_NumProcessors (kip));
 
     for (i = 0; i < NUM_VMS; ++i)
-    	vm[i].init (L4_NumProcessors(kip), L4_NumProcessors(kip), RAM_SIZE / NUM_VMS, RAM_SIZE / NUM_VMS * i, i);
+    	vm[i].init (L4_NumProcessors(kip),
+    			L4_NumProcessors(kip),
+    			(RAM_SIZE / NUM_VMS) & ~0x3FFFFF,
+    			(RAM_SIZE / NUM_VMS * i) & ~0x3FFFFF,
+    			i);
 
     ptree_t::tree.init(vmthread_t::get_tid(0));
     ptorus_t::torus.init(vmthread_t::get_tid(0));
