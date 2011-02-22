@@ -30,7 +30,12 @@ bgp_personality_network_t::bgp_personality_network_t()
                            ionoderank (64)
 {
     fdt_prop_t *prop;
-    
+
+    prop = fdt_t::fdt->find_prop_node ("/personality/net/ionoderank");
+    if (prop && prop->length() == sizeof (u32_t)) {
+        ionoderank = prop->u32 (0);
+    }
+
     prop = fdt_t::fdt->find_prop_node ("/plb/tree/nodeid");
     if (prop && prop->length() == sizeof (u32_t))
         rank = prop->u32 (0);
