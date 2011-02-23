@@ -11,16 +11,20 @@
 
 -include Makeconf
 
-CROSS		?= powerpc-unknown-elf-
+CROSS		?= powerpc-linux-
 CC		:= $(CROSS)gcc
 LD		:= $(CROSS)ld
 RM		:= rm -f
 
+GCCINSTALLDIR	?= $(dir $(shell $(CC) -print-libgcc-file-name))
+LIBGCCINC	?= $(GCCINSTALLDIR)include
+LIBGCCDIR	?= $(GCCINSTALLDIR)
+
 TARGET		:= khvmm
-USR_DIR		?= ../../l4ka-pistachio/bluegene-build/userland/build
+USR_DIR		?= ${HOME}/src/pistachio-hg/build/powerpc/user/
 SRC_DIR		:= ../src
-INC_DIR		:= ../include $(USR_DIR)/include
-LIB_DIR		:= $(USR_DIR)/lib /home/jens/x-tools/powerpc-unknown-elf/lib/gcc/powerpc-unknown-elf/4.3.4
+INC_DIR		:= ../include $(USR_DIR)/include $(GCCINSTALLDIR)include
+LIB_DIR		:= $(USR_DIR)/lib $(LIBGCCDIR)
 
 # Sources
 LIB		:= l4 io gcc
