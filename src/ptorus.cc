@@ -19,7 +19,7 @@
                                  DMA_BASE_CONTROL_RTIU_EN    |  \
                                  DMA_BASE_CONTROL_IMFU_EN    |  \
                                  DMA_BASE_CONTROL_RMFU_EN)
-extern vm_t vm;
+extern vm_t vm[NUM_VMS];
 
 #define Tdprintf(x...)     
 
@@ -43,7 +43,8 @@ bool ptorus_t::handle_hwirq(const word_t irq, word_t &core_mask)
     set_pending(irq);
       
     if (!vmchan.is_enabled())
-        return vm.torus.handle_hwirq(irq, core_mask);
+    	for (int i = 0; i < NUM_VMS; ++i)
+    		return vm[i].torus.handle_hwirq(irq, core_mask);
             
     Tdprintf("TORUS: irq %ld (%#lx)\n", irq, irq);
     

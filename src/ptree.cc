@@ -15,7 +15,7 @@
 #include "ptree.h"
 #include "vm.h"
 
-extern vm_t vm;
+extern vm_t vm[NUM_VMS];
 
 #undef DEBUG_PACKETS
 //#define DEBUG_PACKETS
@@ -127,9 +127,11 @@ word_t ptree_chan_t::recv_packet()
         else if (lhdr.src_key != tree->nodeid)
         {
             if (channel == 0)
-                core_mask |= vm.tree.chan0.recv_packet (hdr.raw);
+            	for (int i = 0; i < NUM_VMS; ++i)
+            		core_mask |= vm[i].tree.chan0.recv_packet (hdr.raw);
             else
-                core_mask |= vm .tree.chan1.recv_packet (hdr.raw);
+            	for (int i = 0; i < NUM_VMS; ++i)
+            		core_mask |= vm[i].tree.chan1.recv_packet (hdr.raw);
         }
         
         status = gpr_read (PSR);
@@ -238,7 +240,8 @@ void ptree_t::init(L4_ThreadId_t irq_handler)
     
     nodeaddr = dcr_read(NADDR);
 
-    vm.tree.set_nodeaddr(nodeaddr);
+    for (int i = 0; i < NUM_VMS; ++i)
+    	vm[i].tree.set_nodeaddr(nodeaddr);
 
     printf("TREE: node id %06lx addr %lx irq <%d,%d,%d,%d>\n", 
            nodeid, nodeaddr,  inj_irq, rcv_irq, rcv_irq_vc0, rcv_irq_vc1);

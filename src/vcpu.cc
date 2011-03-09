@@ -28,7 +28,7 @@ bool vcpu_t::init (unsigned c, unsigned p, vm_t *v, L4_ThreadId_t space)
     pcpu = p;
     vm = v;
     
-    tid = get_new_tid (vmthread_t::register_vcpu (this));
+    tid = get_new_tid (vmthread_t::vmthreads[p].register_vcpu (this));
     
     L4_ThreadId_t disp = vmthread_t::get_tid (pcpu);
 
@@ -136,7 +136,6 @@ bool vcpu_t::launch_vcpu(word_t ip)
 {
     L4_Msg_t msg;
 
-    printf("Starting VCPU at entry point %#lx\n",ip);
     L4_Clear(&msg);
     L4_Append (&msg, ip);
     L4_Append (&msg, 0);

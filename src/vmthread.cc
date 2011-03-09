@@ -21,8 +21,8 @@
 vmthread_t vmthread_t::vmthreads[MAX_PCPU];
 word_t vmthread_t::tid_system_base;
 
-vcpu_t * vmthread_t::registry[64];
-unsigned vmthread_t::registry_idx;
+vcpu_t * registry[64];
+unsigned registry_idx;
 
 bool vmthread_t::remote_vcpu_bootstrap (vcpu_t *vcpu, word_t ip)
 {
@@ -132,9 +132,11 @@ __attribute__((noreturn))
         // Other VMthread
 	if (L4_IsLocalId (src)) {
 	    //printf ("Kicking VCPU via exregs:%u\n", cpu);
-            vcpu_t *vcpu = registry[cpu + 1];
+        for (int i = 0; i < NUM_VMS; ++i) {
+			vcpu_t *vcpu = registry[i+1];
             vcpu->set_event_inject();
-            dst = L4_nilthread;
+        }
+        dst = L4_nilthread;
 	    continue;
 	}
 
@@ -146,18 +148,21 @@ __attribute__((noreturn))
             
             dst = handle_hwirq(tno, core_mask) ? src : L4_nilthread;
 	    
-	    vcpu_t *vcpu = registry[cpu+1];
-            if (vcpu) 
-	    {
-		if (core_mask & (1ul << cpu))
-		    vcpu->set_event_inject();
-		vcpu->set_event_inject_remote(core_mask);
+        for (int i = 0; i < NUM_VMS; ++i) {
+			vcpu_t *vcpu = registry[i+1];
+			if (vcpu)
+			{
+				if (core_mask & (1ul << cpu))
+					vcpu->set_event_inject();
+				vcpu->set_event_inject_remote(core_mask);
+			}
 
 	    }
 	    continue;
 	}
 
         // Figure out which vCPU sent us a message
+		//FIXME: This assumes one PCPU!
 	vcpu_t *vcpu = registry[L4_Version (src)];
 
 #if 0

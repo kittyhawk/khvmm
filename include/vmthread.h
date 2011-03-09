@@ -18,8 +18,8 @@ class vcpu_t;
 class vmthread_t
 {
 private:
-    static vcpu_t *     registry[64];
-    static unsigned     registry_idx;
+    vcpu_t *     registry[64];
+    unsigned     registry_idx;
     static word_t	tid_system_base;
     char                stack[STACK_SIZE] __attribute__((aligned(16)));
 
@@ -42,7 +42,7 @@ public:
             return vmthreads[pcpu].tid;
         }
 
-    static unsigned register_vcpu (vcpu_t *vcpu)
+    unsigned register_vcpu (vcpu_t *vcpu)
         {
             registry[++registry_idx] = vcpu;
             return registry_idx;
