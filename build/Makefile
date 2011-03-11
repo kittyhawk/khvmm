@@ -23,7 +23,7 @@ LIBGCCDIR	?= $(GCCINSTALLDIR)
 TARGET		:= khvmm
 USR_DIR		?= ${HOME}/src/pistachio-hg/build/powerpc/user/
 SRC_DIR		:= ../src
-INC_DIR		:= ../include $(USR_DIR)/include $(GCCINSTALLDIR)include
+INC_DIR		:= ../src $(USR_DIR)/include $(GCCINSTALLDIR)include
 LIB_DIR		:= $(USR_DIR)/lib $(LIBGCCDIR)
 
 # Sources
