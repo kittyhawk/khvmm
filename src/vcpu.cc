@@ -391,8 +391,14 @@ void vcpu_t::emulate (L4_MsgTag_t tag, L4_Msg_t &msg, L4_Msg_t &rep, word_t ip, 
             break;
 
         case 32:            // lwz
-        	assert (gva == (opcode.ra() ? *gpr (gpregs, opcode.ra()) + opcode.d() : 0));
+            assert (gva == (opcode.ra() ? *gpr (gpregs, opcode.ra()) + opcode.d() : 0));
             core_mask = emulate_device_gpr (gpa, gpr (gpregs, opcode.rt()), true);
+            break;
+
+		case 33:			// lwzu
+            assert (gva == (opcode.ra() ? *gpr (gpregs, opcode.ra()) + opcode.d() : 0));
+            core_mask = emulate_device_gpr (gpa, gpr (gpregs, opcode.rt()), true);
+            *gpr (gpregs, opcode.ra()) = gva;
             break;
 
         case 36:            // stw
