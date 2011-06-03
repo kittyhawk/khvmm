@@ -89,7 +89,7 @@ extern "C" int main()
 
     fdt_t::fdt = new (kip->BootInfo) fdt_t;
     L4_Fpage_t fdt_page = L4_FpageAddRights(L4_FpageLog2(kip->BootInfo,0x1111),0x111);
-    L4_Sigma0_GetPage(L4_nilthread,fdt_page,fdt_page);
+    L4_Sigma0_GetPage_RcvWindow(L4_nilthread,fdt_page,fdt_page);
     if (!(fdt_t::fdt->is_valid())) {
     	printf("Invalid FDT!\n");
     	return -1;
