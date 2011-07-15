@@ -35,7 +35,7 @@ L4_ThreadId_t get_new_tid (unsigned id)
 
     return tid;
 }
-
+#if 0
 /*
  * Convert a string to an unsigned long integer.
  *
@@ -102,3 +102,4 @@ unsigned long strtoul(const char* nptr, const char** endptr, int base)
 		*endptr = (any ? s - 1 : nptr);
 	return (acc);
 }
+#endif

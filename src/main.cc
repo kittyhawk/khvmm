@@ -97,7 +97,7 @@ extern "C" int main()
 
     map_memory(); 
     allocate_memory();
-
+#if 0 //we want this done by memcached
     //copy the kernel and ramdisk images from the first VM to all the others if necessary.
     printf("\n");
     for (i = 1; i < NUM_VMS; ++i) {
@@ -139,16 +139,22 @@ extern "C" int main()
     if (shared_script)
     	printf("\n!!!WARNING!!! Using the same u-boot script for more than one VM will most likely break your network configuration!\n");
     printf("\n");
-
+#endif
     vmthread_t::init (L4_NumProcessors (kip));
-
+#if 0
     for (i = 0; i < NUM_VMS; ++i)
     	vm[i].init (L4_NumProcessors(kip),
     			L4_NumProcessors(kip),
     			(RAM_SIZE / NUM_VMS) & ~0x3FFFFF,
     			(RAM_SIZE / NUM_VMS * i) & ~0x3FFFFF,
     			i);
-
+#else //just init VM0 (dom0) here.
+	vm[0].init (L4_NumProcessors(kip),
+			L4_NumProcessors(kip),
+			(RAM_SIZE / NUM_VMS) & ~0x3FFFFF,
+			(RAM_SIZE / NUM_VMS * 0) & ~0x3FFFFF,
+			0);
+#endif
     ptree_t::tree.init(vmthread_t::get_tid(0));
     ptorus_t::torus.init(vmthread_t::get_tid(0));
 

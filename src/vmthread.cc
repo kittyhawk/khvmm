@@ -103,11 +103,9 @@ __attribute__((noreturn))
 {
     L4_ThreadId_t src, dst, control_ltid;
     L4_MsgTag_t tag;
-    
     control_ltid = L4_LocalIdOf(control_tid);
     
     printf ("VMM thread started on CPU %u (%lx)\n", cpu, L4_Myself().raw);
-
     L4_Accept(L4_UntypedWordsAcceptor);
     L4_LoadMR(0, 0);
     L4_Send(control_tid); // handshake with control thread

@@ -120,7 +120,20 @@ public:
             gpr_write(INJ_CNTR_CNF_REG(counter, CNF_HITZERO_CLR), INJ_CTR_MASK(counter));
             
         }
-    
+
+    void enable_rcv_counter(word_t counter, paddr_t paddr)
+        {
+            assert(counter < nr_counters);
+
+
+            gpr_write(RCV_CTR_REG(counter, CTR_CTR), 0);
+            gpr_write(RCV_CTR_REG(counter, CTR_BASE), paddr >> 4);
+
+            gpr_write(RCV_CNTR_CNF_REG(counter, CNF_ENABLE), INJ_CTR_MASK(counter));
+            gpr_write(INJ_CNTR_CNF_REG(counter, CNF_HITZERO_CLR), INJ_CTR_MASK(counter));
+
+        }
+
     void enable_inj_counter_hitzero_irq(word_t counter, word_t vector=0);
     word_t get_inj_counter_group_status()
         { 
@@ -210,6 +223,8 @@ class ptorus_t : public torus_t
 
     word_t pending_irqs[3];
     
+    bool rx_ctrs_used[32],tx_ctrs_used[32],rx_fifos_used[32],tx_fifos_used[32];
+
     class vmchan_t : public torus_dmareg_t
     {
         friend class ptorus_t;
@@ -285,14 +300,14 @@ class ptorus_t : public torus_t
   
     void set_dma_rcv_region(word_t r, paddr_t min, paddr_t max)
         { 
-            dmadcr_write(DmaDcr(rDMA_MIN_VALID_ADDR0+(2*r)), min >> 4); 
-            dmadcr_write(DmaDcr(rDMA_MAX_VALID_ADDR0+(2*r)), max >> 4); 
+            dmadcr_write(DmaDcr(rDMA_MIN_VALID_ADDR0+(2*r)), min >> 4);
+            dmadcr_write(DmaDcr(rDMA_MAX_VALID_ADDR0+(2*r)), max >> 4);
         }
     
     void set_dma_inj_region(word_t r, paddr_t min, paddr_t max)
         { 
-            dmadcr_write(DmaDcr(iDMA_MIN_VALID_ADDR0+(2*r)), min >> 4); 
-            dmadcr_write(DmaDcr(iDMA_MAX_VALID_ADDR0+(2*r)), max >> 4); 
+            dmadcr_write(DmaDcr(iDMA_MIN_VALID_ADDR0+(2*r)), min >> 4);
+            dmadcr_write(DmaDcr(iDMA_MAX_VALID_ADDR0+(2*r)), max >> 4);
         }
 
     void set_inj_fifo_map(word_t group, word_t fifo, u8_t fifomap)
@@ -359,14 +374,6 @@ class ptorus_t : public torus_t
                          ((fifomap & 0xff) <<  0));
         }
 
-    
-    void enable_inj_fifo(word_t group, word_t fifo)
-        {
-            assert(fifo < torus_dma_t::nr_inj_fifos);
-            DmaDcr dcr = DmaDcr(iDMA_FIFO_ENABLE0 + group);
-            dmadcr_write(dcr, dmadcr_read(dcr) | (0x80000000 >> fifo));
-        }
-    
     void enable_rcv_fifo(word_t group, word_t fifo)
         {
             // Can only enable non-header RCV FIFOs
@@ -388,6 +395,60 @@ public:
         { set_dma_inj_region(7, min, max); }
     void set_kvmm_dma_rcv_region(paddr_t min, paddr_t max)
         { set_dma_rcv_region(7, min, max); }
+    void set_memcached_dma_inj_region(paddr_t min, paddr_t max)
+        { set_dma_inj_region(1, min, max); }
+    void set_memcached_dma_rcv_region(paddr_t min, paddr_t max)
+        { set_dma_rcv_region(1, min, max); }
+
+    void diable_inj_fifo(word_t group, word_t fifo)
+        {
+            assert(fifo < torus_dma_t::nr_inj_fifos);
+            DmaDcr dcr = DmaDcr(iDMA_FIFO_ENABLE0 + group);
+            dmadcr_write(dcr, dmadcr_read(dcr) & ~(0x80000000 >> fifo));
+        }
+
+    void enable_inj_fifo(word_t group, word_t fifo)
+        {
+            assert(fifo < torus_dma_t::nr_inj_fifos);
+            DmaDcr dcr = DmaDcr(iDMA_FIFO_ENABLE0 + group);
+            dmadcr_write(dcr, dmadcr_read(dcr) | (0x80000000 >> fifo));
+        }
+
+    word_t alloc_rx_ctr() {
+    	int i;
+    	for (i = 0; i < 32; ++i)
+    		if (!rx_ctrs_used[i]) {
+    			rx_ctrs_used[i] = true;
+    			return i;
+    		}
+    }
+
+    word_t alloc_tx_ctr() {
+    	int i;
+    	for (i = 0; i < 32; ++i)
+    		if (!tx_ctrs_used[i]) {
+    			tx_ctrs_used[i] = true;
+    			return i;
+    		}
+    }
+
+    word_t alloc_rx_fifo() {
+    	int i;
+    	for (i = 0; i < 32; ++i)
+    		if (!rx_fifos_used[i]) {
+    			rx_fifos_used[i] = true;
+    			return i;
+    		}
+    }
+
+    word_t alloc_tx_fifo() {
+    	int i;
+    	for (i = 0; i < 32; ++i)
+    		if (!tx_fifos_used[i]) {
+    			tx_fifos_used[i] = true;
+    			return i;
+    		}
+    }
 
     word_t dcr_read (Dcr reg)
         {

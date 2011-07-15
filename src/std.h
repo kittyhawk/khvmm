@@ -114,6 +114,11 @@ extern "C" {
     void *memset (void *, int, size_t);
     void zero_mem( void *dest, word_t size );
     void page_zero( void *start, unsigned long size );
+    extern int sprintf (char *__restrict __s,
+                        __const char *__restrict __format, ...);
+         //__THROW __attribute__ ((__format__ (__printf__, 2, 3)));
+    //libc_hidden_proto(sprintf)
+
 };
 
 bool kernel_has_feature (L4_KernelInterfacePage_t *, char const *feature);

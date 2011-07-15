@@ -40,8 +40,11 @@ class vcpu_t
 
         /* BGP Tree */
         DCR_TREE_MIN				= 0xc00,
-        DCR_TREE_MAX				= 0xc7f
+        DCR_TREE_MAX				= 0xc7f,
         
+        /* Virtual hypervisor device */
+        VMM_DEV_MIN					= 0x5c0,
+        VMM_DEV_MAX					= 0x5ff
     };
 
     enum Spr

@@ -10,6 +10,8 @@
  ********************************************************************/
 #pragma once
 
+#define HAVE_KHVMM
+
 #define MAX_VCPU        4
 #define MAX_PCPU        4
 #define NUM_VMS			2
@@ -21,7 +23,7 @@
  */
 #define KERNEL_OFFSET	0x11000000ul
 #define RAMDISK_OFFSET	0x12000000ul
-#define SCRIPT_OFFSET	0x100000ul
+#define SCRIPT_OFFSET	0x10000000ul
 
 /*
  * These don't have to be completely accurate. They just need
@@ -29,7 +31,7 @@
  * TODO: Pass these in the fdt.
  */
 #define KERNEL_SIZE		(2 * 1024 * 1024)
-#define RAMDISK_SIZE	(8 * 1024 * 1024)
+#define RAMDISK_SIZE	(24 * 1024 * 1024)
 #define SCRIPT_SIZE		1024
 
 #define CPU_FREQ        850000000ul

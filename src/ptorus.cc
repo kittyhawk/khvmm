@@ -21,7 +21,7 @@
                                  DMA_BASE_CONTROL_RMFU_EN)
 extern vm_t vm[NUM_VMS];
 
-#define Tdprintf(x...)     
+#define Tdprintf(x...)
 
 void ptorus_dma_t::enable_inj_counter_hitzero_irq(word_t counter, word_t vector)
 {
@@ -40,14 +40,20 @@ void ptorus_dma_t::enable_rcv_fifo_threshold_irq(word_t fifo, word_t type)
 
 bool ptorus_t::handle_hwirq(const word_t irq, word_t &core_mask)
 {
-    set_pending(irq);
+    Tdprintf("TORUS: irq %ld (%#lx)\n", irq, irq);
+#if 0
+    if (irq == 92)
+    	dma->dump_rcv_channel(9,64);
+    else if (irq == 96)
+    	dma->dump_inj_channel(32,64);
+#endif
+
+	set_pending(irq);
       
     if (!vmchan.is_enabled())
     	for (int i = 0; i < NUM_VMS; ++i)
     		return vm[i].torus.handle_hwirq(irq, core_mask);
-            
-    Tdprintf("TORUS: irq %ld (%#lx)\n", irq, irq);
-    
+
     switch(irq)
     {
     case irq_cnt_thr_min:
@@ -419,6 +425,23 @@ void ptorus_t::init(L4_ThreadId_t irq_handler)
             goto error;
     }
 
+    int i;
+    for (i = 0; i < 3; ++i) {
+    	//these are reserved for the guest
+    	rx_ctrs_used[i] = true;
+    	tx_ctrs_used[i] = true;
+    	rx_fifos_used[i] = true;
+    	tx_fifos_used[i] = true;
+    }
+
+    for (i = 3; i < 32; ++i) {
+    	//these are reserved for the guest
+    	rx_ctrs_used[i] = false;
+    	tx_ctrs_used[i] = false;
+    	rx_fifos_used[i] = false;
+    	tx_fifos_used[i] = false;
+    }
+
     printf("TORUS: coord <%01d,%01d,%01d> dim <%01d,%01d,%01d>\n",
 	   coordinates[0], coordinates[1], coordinates[2], dimension[0], dimension[1], dimension[2]);
     
@@ -545,10 +568,12 @@ void ptorus_dma_t::dump_inj_channel(word_t ch, word_t ctr)
            gpr_read(INJ_CNTR_CNF_REG(32, CNF_HITZERO)));
 
     for (i = ctmin; i < ctmax; i++) {
-	printf("  ctr %02ld: count=%08lx, base=%08lx, enabled=%ld, hitzero=%ld\n",
+	printf("  ctr %02ld: count=%08lx, base=%08lx, limit=%08lx, increment=%08lx, enabled=%ld, hitzero=%ld\n",
                i, 
                gpr_read(INJ_CTR_REG(i, CTR_CTR)),
                gpr_read(INJ_CTR_REG(i, CTR_BASE)),
+               gpr_read(INJ_CTR_REG(i, CTR_LIMIT)),
+               gpr_read(INJ_CTR_REG(i, CTR_INC)),
                ((gpr_read(INJ_CNTR_CNF_REG(i, CNF_ENABLED)) >> (31-i%32)) & 1),
                ((gpr_read(INJ_CNTR_CNF_REG(i, CNF_HITZERO)) >> (31-i%32)) & 1));
     }
@@ -581,10 +606,12 @@ void ptorus_dma_t::dump_rcv_channel(word_t ch, word_t ctr)
            gpr_read(RCV_CNTR_CNF_REG(32, CNF_HITZERO)));
 
     for (i = ctmin; i < ctmax; i++) {
-	printf("  ctr %02ld: count=%08lx, base=%08lx, enabled=%ld, hitzero=%ld\n",
+	printf("  ctr %02ld: count=%08lx, base=%08lx, limit=%08lx, increment=%08lx, enabled=%ld, hitzero=%ld\n",
                i, 
                gpr_read(RCV_CTR_REG(i, CTR_CTR)),
                gpr_read(RCV_CTR_REG(i, CTR_BASE)),
+               gpr_read(RCV_CTR_REG(i, CTR_LIMIT)),
+               gpr_read(RCV_CTR_REG(i, CTR_INC)),
                ((gpr_read(RCV_CNTR_CNF_REG(i, CNF_ENABLED)) >> (31-i%32)) & 1),
                ((gpr_read(RCV_CNTR_CNF_REG(i, CNF_HITZERO)) >> (31-i%32)) & 1));
     }

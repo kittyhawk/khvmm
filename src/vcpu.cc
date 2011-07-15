@@ -17,6 +17,7 @@
 #include "vcpu.h"
 #include "vm.h"
 #include "vmthread.h"
+#include <libmemcached/memcached.h>
 
 //#define DEBUG //uncomment this to show debug output
 
@@ -207,6 +208,10 @@ void vcpu_t::emulate_mtdcr (Dcr dcr, word_t val)
     case torus_t::DCRBASE_DMA_MIN ... torus_t::DCRBASE_DMA_MAX:
         vm->torus.dmadcr_write (vtorus_t::DmaDcr (dcr - torus_t::DCRBASE_DMA_MIN), val);
         return;
+
+    case VMM_DEV_MIN ... VMM_DEV_MAX:
+		vm->handle_hypervisor_access(vm_t::Dcr(dcr),val);
+		return;
 
     default:
         printf ("%s: DCR:%#lx <- V:%#lx\n", __func__, static_cast<word_t>(dcr), val);
@@ -560,7 +565,7 @@ bool vcpu_t::dispatch_message (L4_MsgTag_t tag)
             break;
 
         default:
-            printf("TID %lx: unhandled fault %lu\n", tid.raw, fault);
+        	printf("TID %lx: unhandled fault %lu\n", tid.raw, fault);
     	    L4_KDB_Enter("unhandled fault");
     	    return false;
     }

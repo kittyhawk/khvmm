@@ -21,13 +21,13 @@ LIBGCCINC	?= $(GCCINSTALLDIR)include
 LIBGCCDIR	?= $(GCCINSTALLDIR)
 
 TARGET		:= khvmm
-USR_DIR		?= ${HOME}/src/pistachio-hg/build/powerpc/user/
+USR_DIR		?= ../../l4ka-pistachio/bluegene-build/userland/build
 SRC_DIR		:= ../src
-INC_DIR		:= ../src $(USR_DIR)/include $(GCCINSTALLDIR)include
-LIB_DIR		:= $(USR_DIR)/lib $(LIBGCCDIR)
+INC_DIR		:= ../src $(USR_DIR)/include $(GCCINSTALLDIR)include /usr/src/buildroot-2011.05/output/target/include
+LIB_DIR		:= $(USR_DIR)/lib $(LIBGCCDIR) /usr/src/buildroot-2011.05/output/target/lib /usr/src/buildroot-2011.05/output/target/usr/lib
 
 # Sources
-LIB		:= l4 io gcc
+LIB		:= l4 io c m gcc
 SRC		:= khvmm.ld $(wildcard $(SRC_DIR)/*.S) $(wildcard $(SRC_DIR)/*.cc)
 OBJ		:= $(notdir		\
 		   $(patsubst %.ld,%.o,	\
@@ -45,7 +45,7 @@ PFLAGS		:= $(addprefix -D,$(DEFINES)) $(addprefix -I,$(INC_DIR))
 
 # Optimization options
 AFLAGS		:= -mno-toc
-DFLAGS		:= -MP -MMD -pipe
+DFLAGS		:= -MP -MMD -pipe -static
 OFLAGS		:= -Os -g
 
 # Language options
@@ -66,11 +66,11 @@ SFLAGS		:= $(PFLAGS) $(DFLAGS)
 CFLAGS		:= $(PFLAGS) $(DFLAGS) $(OFLAGS) $(AFLAGS) $(FFLAGS) $(WFLAGS) $(MFLAGS)
 
 # Linker flags
-LFLAGS		:= --gc-sections --warn-common -static -N $(addprefix -L,$(LIB_DIR)) -T
+LFLAGS		:= --gc-sections --warn-common -static -N $(addprefix -L,$(LIB_DIR)) -T 
 
 # Targets
 $(TARGET):	$(OBJ)
-		$(LD) $(LFLAGS) $^ $(addprefix -l,$(LIB)) -o $@
+		$(LD) $(LFLAGS) $^ /home/jens/workspace/kh-libmemcached-khvmm/libmemcached/libmemcached.a $(addprefix -l,$(LIB)) -o $@
 
 .PHONY:		clean
 .PHONY:		cleanall
