@@ -86,7 +86,10 @@ bool vcpu_t::init (unsigned c, unsigned p, vm_t *v, L4_ThreadId_t space)
 
     set_reset_state();
 
-    return vmthread_t::vmthreads[pcpu].vcpu_bootstrap (this, 0xfffffffc);
+    if (vmthread_t::vmthreads[pcpu].tid.raw == L4_Myself().raw)
+    	return this->launch_vcpu(0xfffffffc); //already in the vmthread, no need to do RPC
+    else
+    	return vmthread_t::vmthreads[pcpu].vcpu_bootstrap (this, 0xfffffffc);
 }
 
 /* pre-initialize the VCPU */

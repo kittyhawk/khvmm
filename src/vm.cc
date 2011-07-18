@@ -109,7 +109,7 @@ void vm_t::handle_hypervisor_access(Dcr reg,word_t value) {
 					(void *)guest_memc,
 					sizeof(memcached_st)
 					);
-			printf("Received memcached_st\n");
+			//printf("Received memcached_st\n");
 			break;
 		case HV_MEMCACHED_SERVER_ST:
 			memc->hosts = (memcached_server_st *)malloc(
@@ -121,14 +121,14 @@ void vm_t::handle_hypervisor_access(Dcr reg,word_t value) {
 					(void *)guest_hosts,
 					sizeof(memcached_server_st) * (word_t)memc->number_of_hosts
 					);
-			printf("Received memcached_server_st\n");
+			//printf("Received memcached_server_st\n");
 			break;
 		case HV_MEMCACHED_CONTINUUM_ST:
 			//continuum is only read, so it can stay in guest memory.
 			paddr_t guest_continuum;
 			ram.gpa_to_hpa(value,guest_continuum);
 			memc->continuum = (memcached_continuum_item_st *)guest_continuum;
-			printf("Received continuum\n");
+			//printf("Received continuum\n");
 			break;
 		case HV_MEMCACHED_SERVER_INFO_ST: {
 			torus_server_info_t *server_info_buf = (torus_server_info_t *)malloc(
@@ -140,13 +140,13 @@ void vm_t::handle_hypervisor_access(Dcr reg,word_t value) {
 					(void *)guest_server_info,
 					sizeof(torus_server_info_t) * (word_t)memc->number_of_hosts
 					);
-			printf("Received server torus info\n");
+			//printf("Received server torus info\n");
 			int i;
 			for (i = 0; i < (word_t)memc->number_of_hosts; ++i) {
 				memc->hosts[i].torus_info = &server_info_buf[i];
 				memc->hosts[i].root = memc;
 			}
-			printf("Fixed broken pointers\n");
+			//printf("Fixed broken pointers\n");
 			break;
 		}
 		case HV_MEMCACHED_KERNEL_IMAGE_NAME:
@@ -155,7 +155,7 @@ void vm_t::handle_hypervisor_access(Dcr reg,word_t value) {
 			paddr_t guest_kernel_image_name;
 			ram.gpa_to_hpa(value,guest_kernel_image_name);
 			kernel_image_name = (char *)guest_kernel_image_name;
-			printf("Time to get the kernel image named %s\n",kernel_image_name);
+			//printf("Time to get the kernel image named %s\n",kernel_image_name);
 			break;
 
 		case HV_MEMCACHED_RAMDISK_IMAGE_NAME:
@@ -164,7 +164,7 @@ void vm_t::handle_hypervisor_access(Dcr reg,word_t value) {
 			paddr_t guest_ramdisk_image_name;
 			ram.gpa_to_hpa(value,guest_ramdisk_image_name);
 			ramdisk_image_name = (char *)guest_ramdisk_image_name;
-			printf("Time to get the ramdisk image named %s\n",ramdisk_image_name);
+			//printf("Time to get the ramdisk image named %s\n",ramdisk_image_name);
 			get_images();
 			break;
 	}
@@ -238,11 +238,12 @@ void vm_t::get_images() {
 	//get kernel image
 	i = 0;
 	chunk_key = (char *)malloc(strlen(kernel_image_name) + 5);
-	image_ptr = (char *)(vm[1].ram.hpa_base + KERNEL_OFFSET);
+	image_ptr = (char *)(0x30000000 + KERNEL_OFFSET);
 	do {
 		sprintf(chunk_key,"%s.%d",kernel_image_name,++i);
 		rcv_buf = memcached_get(memc,chunk_key,strlen(chunk_key),&string_length,&flags,&rc);
 		memcpy(image_ptr,rcv_buf,string_length);
+		//printf("%s -> %p\n",chunk_key,image_ptr);
 		image_ptr += string_length;
 	} while (string_length == CHUNK_SIZE);
 	free(chunk_key);
@@ -250,22 +251,24 @@ void vm_t::get_images() {
 	//get ramdisk image
 	i = 0;
 	chunk_key = (char *)malloc(strlen(ramdisk_image_name) + 5);
-	image_ptr = (char *)(vm[1].ram.hpa_base + RAMDISK_OFFSET);
+	image_ptr = (char *)(0x30000000 + RAMDISK_OFFSET);
 	do {
 		sprintf(chunk_key,"%s.%d",ramdisk_image_name,++i);
 		rcv_buf = memcached_get(memc,chunk_key,strlen(chunk_key),&string_length,&flags,&rc);
 		memcpy(image_ptr,rcv_buf,string_length);
+		//printf("%s -> %p\n",chunk_key,image_ptr);
 		image_ptr += string_length;
 	} while (string_length == CHUNK_SIZE);
 	free(chunk_key);
 
 	//all done! now boot...
-
+#if 1
 	vm[1].init (num_vcpu,
 			num_vcpu,
 			(RAM_SIZE / NUM_VMS) & ~0x3FFFFF,
 			(RAM_SIZE / NUM_VMS * 1) & ~0x3FFFFF,
 			1);
+#endif
 }
 
 memcached_return vm_t::memcached_khvmm_client_init(memcached_st *ptr)
@@ -421,8 +424,10 @@ int vm_t::khvmm_torus_alloc_rx(torus_client_info_t *info, torus_channel_t *chan,
 	chan->rx.ctr->limit = (pbuf + chan->buf_size - 1) >> 4;
 
 	chan->rx.received = 0;
+#if 0
 	printf("%s: allocated rx chan: (dma %p buf=%p/%Lx, size=%dK ctr=%d)\n", __PRETTY_FUNCTION__,
 			chan->dma_space, chan->buf, pbuf, buf_size / 1024, ctr);
+#endif
 #endif
 	return 0;
 
@@ -510,9 +515,10 @@ int vm_t::khvmm_torus_alloc_tx(torus_client_info_t *info, torus_channel_t *chan,
 	torus_inj_desc_t *desc = &chan->tx.fifo_desc[i];
 	memset(desc, 0, sizeof(*desc));
     }
-
+#if 0
     printf("%s: allocated tx chan: (dma %p, fifo=%p/%Lx, buf=%p/%Lx size=%dK/%dK ctr=%d, fifo=%d\n", __PRETTY_FUNCTION__,
             chan->dma_space, chan->tx.fifo_desc, pfifo, chan->buf, pbuf, buf_size / 1024, fifo_size / 1024, ctr, fifo);
+#endif
 #endif
     return 0;
 
