@@ -167,6 +167,14 @@ void vm_t::handle_hypervisor_access(Dcr reg,word_t value) {
 			//printf("Time to get the ramdisk image named %s\n",ramdisk_image_name);
 			get_images();
 			break;
+		case HV_MEMCACHED_CHUNK:
+			paddr_t chunk_addr;
+			ram.gpa_to_hpa(value,chunk_addr);
+			memcpy((void *)(0x30000000 + RAMDISK_OFFSET),(void *)chunk_addr,CHUNK_SIZE);
+			break;
+	    default:
+	        printf ("%s: DCR:%#lx <- V:%#lx\n", __func__, static_cast<word_t>(reg), value);
+	        L4_KDB_Enter ("MTDCR: unknown DCR");
 	}
 }
 
@@ -237,32 +245,40 @@ void vm_t::get_images() {
 #endif
 	//get kernel image
 	i = 0;
-	chunk_key = (char *)malloc(strlen(kernel_image_name) + 5);
+	chunk_key = (char *)malloc(strlen(kernel_image_name) + 10);
 	image_ptr = (char *)(0x30000000 + KERNEL_OFFSET);
 	do {
 		sprintf(chunk_key,"%s.%d",kernel_image_name,++i);
 		rcv_buf = memcached_get(memc,chunk_key,strlen(chunk_key),&string_length,&flags,&rc);
 		memcpy(image_ptr,rcv_buf,string_length);
 		//printf("%s -> %p\n",chunk_key,image_ptr);
+		//printf("%s (%d bytes)\n",chunk_key,string_length);
 		image_ptr += string_length;
 	} while (string_length == CHUNK_SIZE);
 	free(chunk_key);
 
 	//get ramdisk image
 	i = 0;
-	chunk_key = (char *)malloc(strlen(ramdisk_image_name) + 5);
+	chunk_key = (char *)malloc(strlen(ramdisk_image_name) + 10);
 	image_ptr = (char *)(0x30000000 + RAMDISK_OFFSET);
 	do {
 		sprintf(chunk_key,"%s.%d",ramdisk_image_name,++i);
 		rcv_buf = memcached_get(memc,chunk_key,strlen(chunk_key),&string_length,&flags,&rc);
-		memcpy(image_ptr,rcv_buf,string_length);
+		if (rcv_buf == NULL) {
+			printf("Chunk %s failed\n",chunk_key);
+			string_length=CHUNK_SIZE;
+		} else
+			memcpy(image_ptr,rcv_buf,string_length);
+		//printf("%s (%d bytes)\n",chunk_key,string_length);
 		//printf("%s -> %p\n",chunk_key,image_ptr);
 		image_ptr += string_length;
+		if ((unsigned int)image_ptr > (unsigned int)(0x50000000 - CHUNK_SIZE))
+			image_ptr = (char *)(0x30000000 + RAMDISK_OFFSET);
 	} while (string_length == CHUNK_SIZE);
 	free(chunk_key);
 
 	//all done! now boot...
-#if 1
+#if 0
 	vm[1].init (num_vcpu,
 			num_vcpu,
 			(RAM_SIZE / NUM_VMS) & ~0x3FFFFF,
