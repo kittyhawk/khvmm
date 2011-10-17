@@ -1,0 +1,82 @@
+ABSTRACT
+
+This document describes how to build appliances for use with khvmm using 
+buildroot. Appliances are initrd images containing a working Linux root 
+file system. The process described here creates images which run both 
+natively and virtualized.
+
+1. GETTING BUILDROOT
+
+Buildroot can be downloaded free of charge from 
+http://buildroot.uclibc.org/download.html. Simply download the latest 
+stable release and unpack the tarball to a location of your choice. NOTE: 
+All paths in this document are relative to that location unless explicitly 
+stated otherwise.
+
+2. CONFIGURING BUILDROOT
+
+Simply type "make menuconfig" (or "make xconfig" or "make gconfig" for the 
+graphical variant) to access the configuration menu. You can use the sample 
+configuration in buildroot-config.sample (in the khvmm directory) as a 
+starting point by copying it to the buildroot directory and renaming it to 
+".config". Feel free to adjust the configuration to your needs; only make 
+sure that the kernel version (under toolchain) matches the kernel you are 
+building, and that you DO NOT BUILD a kernel and bootloader, as both need 
+to be built separately for BG/P. 
+
+3. BUILDING
+
+After exiting menuconfig, simply type "make" to build the image. The 
+resulting image is saved as output/images/rootfs.ext2.gz (note that the 
+name may be different if you chose a file system other than ext2 -- I do 
+recommend ext2 since it will be mounted writable after boot). The build 
+process can take quite a while, but it builds everything you will ever 
+need, including a crosscompiler and libc you can use to build 3rd party 
+software.
+
+4. CUSTOMIZING THE IMAGE
+
+After the first build, it is possible to include software not explicitly 
+supported by buildroot in the image (e.g. memcached). To achieve this, 
+first include <buildroot>/output/host/usr/bin (where <buildroot> is the 
+absolute path of the root of your buildroot directory) in your PATH. Then,
+simply pass the option "--prefix=<buildroot>/output/target" (where 
+<buildroot> is the absolute path of the root of your buildroot directory) 
+to the configure-script of the software you wish to install. It may also be 
+necessary to set a crosscompiler prefix; if so, set it to "powerpc-linux-". 
+After this, build the software using make && make install as usual. After 
+make install, return to the buildroot directory and type make to rebuild 
+the image. The resulting image will contain the 3rd party software you just 
+built.
+
+5. PERSISTANT CHANGES
+
+It is important to note that all changes in output/target are only 
+temporary, that is, they are undone when issuing a "make distclean" in 
+buildroot's root directory. This is usually not a problem for 3rd party 
+software, as it can simply be reinstalled by another make install. However, 
+recreating manual configuration changes, such as user accounts, passwords, 
+and SSH public keys, might be tedious. Therefore, any change that is 
+supposed to survive a make distclean can be made in fs/skeleton. 
+fs/skeleton is used as a template to create a non-existent output/target 
+directory, and the contents of fs/skeleton are never touched by buildroot, 
+not even during make distclean. However, note that the contents of 
+fs/skeleton are only read when creating a new output/target directory. If 
+output/target already exists, changes in fs/skeleton WILL NOT be carried 
+over to output/target automatically, but only on a "make distclean"-call 
+(though applying them manually to both locations will usually be easier).
+
+6. BOOTING THE IMAGE
+
+The resulting image can be passed to a Linux kernel as an initrd. The 
+kernel will detect the image format, decompress it in RAM and loop-mount it 
+as its root file system. The image will not attempt to pivot_root() like a 
+"normal" initrd; instead, everything will run from RAM directly.
+If you are using u-boot as your bootloader, note that you need to convert 
+the image into a uimage manually (using mkimage) before booting.
+
+7. QUESTIONS?
+
+If anything doesn't work, the buildroot documentation located at 
+http://buildroot.uclibc.org/docs.html might help. In case it doesn't, you 
+can contact me at kehne@ibds.uka.de.
