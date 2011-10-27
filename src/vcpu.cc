@@ -154,6 +154,7 @@ word_t vcpu_t::emulate_mfdcr (Dcr dcr, word_t *val)
     case DCR_SERDES_MIN ... DCR_SERDES_MAX:     // ignore for now
     case DCR_NETBUS_MIN ... DCR_NETBUS_MAX:
     case DCR_GLOBAL_INT_MIN ... DCR_GLOBAL_INT_MAX:
+    case 0xd2:
         *val = 0;
         return 0;
 
@@ -189,6 +190,7 @@ void vcpu_t::emulate_mtdcr (Dcr dcr, word_t val)
     case DCR_SERDES_MIN ... DCR_SERDES_MAX:     // ignore for now
     case DCR_NETBUS_MIN ... DCR_NETBUS_MAX:
     case DCR_GLOBAL_INT_MIN ... DCR_GLOBAL_INT_MAX:
+    case 0xd2:
         return;
 
     case DCR_TEST_MIN ... DCR_TEST_MAX:
